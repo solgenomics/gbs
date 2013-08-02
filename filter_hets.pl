@@ -13,8 +13,8 @@ my $filename=$opt_f;
 open FILE, "<", $filename or die "No such file $filename";
 my $firstline=1;
 my $number_of_samples = 12;
-my $proportion_allowed_het = 0.5;
-my $min_ratio = 0.10;
+my $proportion_allowed_het = 0.6;
+my $min_ratio = 0.03;
 my $min_reads_per_marker = 50;
 while (<FILE>) {
   chomp $_;
