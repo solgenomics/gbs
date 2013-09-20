@@ -1,3 +1,23 @@
+=head1 NAME
+
+filter_hets.pl - a script to filter potential hets from a uneak gbs pipeline result
+
+=head1 USAGE
+
+ perl filter_hets.pl -f HapMap.hmc.txt > filter_hets.txt
+ grep -v -w -f filter_hets.txt HapMap.hmc.txt > HapMap.hmc.filtered
+ grep -v -w -f filter_hets.txt HapMap.hmp.txt > HapMap.hmp.filtered
+
+=head1 DESCRIPTION
+
+
+=head1 AUTHORS
+
+ Jeremy D. Edwards (jde22@cornell.edu)
+
+=cut
+
+
 use strict;
 use Getopt::Std;
 
@@ -12,10 +32,10 @@ if (!$opt_f) {
 my $filename=$opt_f;
 open FILE, "<", $filename or die "No such file $filename";
 my $firstline=1;
-my $number_of_samples = 12;
-my $proportion_allowed_het = 0.6;
+my $proportion_allowed_het = 0.7;
 my $min_ratio = 0.03;
-my $min_reads_per_marker = 50;
+#my $min_reads_per_marker = 1500;
+my $min_reads_per_marker = 3500;
 while (<FILE>) {
   chomp $_;
   if ($firstline==1) {
@@ -23,12 +43,24 @@ while (<FILE>) {
     next;
   }
   my @row =  split(/\t/, $_);
+  my $number_of_samples = 0;
+  foreach my $cell (@row) {
+    if ($cell =~ m/^\d+\|\d+$/){
+      $number_of_samples++;
+    }
+  }
+
+  my $number_of_missing = 0;
+
   my $not_enough_reads = 0;
   my $ratio_too_low=0;
   my $het_count=0;
   my $i;
   for ($i=1; $i<=$number_of_samples; $i++) {
     my @alleles = split(/\|/,$row[$i]);
+    if (($alleles[0]) == 0 && ($alleles[1] == 0)) {
+      $number_of_missing++;
+    }
     if (($alleles[0]) > 0 && ($alleles[1] > 0)) {
       $het_count++;
       my $het_major_allele;
@@ -67,7 +99,20 @@ while (<FILE>) {
   #     $ratio_too_low = 1;
   #   }
   # }
-  if ($het_count/$number_of_samples > $proportion_allowed_het || $ratio_too_low || $not_enough_reads) {
+  my $number_of_nonmissing = $number_of_samples - $number_of_missing;
+  # if ($number_of_missing){
+  #   $number_of_nonmissing = $number_of_samples-$number_of_missing;
+  # } else {
+  #   $number_of_nonmissing = $number_of_samples;
+  # }
+  if ($number_of_nonmissing == 0){
+    #print "$row[0]\n";
+    #print STDERR "$row[0] $number_of_samples $number_of_missing\n"; 
+    next;
+  }
+  if ($het_count/$number_of_nonmissing > $proportion_allowed_het || $ratio_too_low || $not_enough_reads) {
+    #print "$row[0]\n";
+  } else {
     print "$row[0]\n";
   }
 }
