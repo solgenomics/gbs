@@ -131,10 +131,31 @@ while (<FILE>) {
     $minor_allele_count{'b'} = $first_allele_count{'b'};
   }
 
-  my $group_a_frequency = ($minor_allele_count{'a'} + 0.5 * $het_count{'a'})/$group_a_total;
-  my $group_b_frequency = ($minor_allele_count{'b'} + 0.5 * $het_count{'b'})/$group_b_total;
+  my $group_a_frequency;
+  my $group_b_frequency;
 
-  print "\t$group_a_frequency\t$group_b_frequency\t$group_a_total\n";
+  if ($group_a_total > 0){
+    $group_a_frequency = ($minor_allele_count{'a'} + 0.5 * $het_count{'a'})/$group_a_total;
+  } else {
+    $group_a_frequency = "NA";
+  }
+
+
+  if ($group_b_total > 0){
+    $group_b_frequency = ($minor_allele_count{'b'} + 0.5 * $het_count{'b'})/$group_b_total;
+  } else {
+    $group_b_frequency = "NA";
+  }
+
+
+  my $frequence_difference;
+  if ($group_a_frequency eq "NA" || $group_b_frequency eq "NA") {
+    $frequence_difference = "NA";
+
+  } else {
+    $frequence_difference = abs($group_b_frequency - $group_a_frequency);
+  }
+  print "\t$group_a_frequency\t$group_b_frequency\t$frequence_difference\n";
 
 
 }
