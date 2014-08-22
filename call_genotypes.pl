@@ -34,8 +34,8 @@ my $snps_processed = 0;
 while (<$F>) { 
     chomp;
 
-    if ($snps_processed % 10 == 0) { 
-	print STDERR "Processing $snps_processed ...\r";
+    if ($snps_processed % 100 == 0) { 
+	print STDERR "Processing $snps_processed ...\n";
     }
 
     $snps_processed++;
@@ -96,27 +96,31 @@ while (<$F>) {
 		    if ( ($counts[$n]->[0] + $counts[$n]->[1]) > 1 ) { 
 			$dosages[$n] = get_genotype($pAA, $pAB, $pBB, $counts[$n]->[0], $counts[$n]->[1]);
 		    }
+		    else { $dosages[$n] = undef; }
 		}
 	    }
 
 	    # hardy weinberg filter
 	    my %score = hardy_weinberg_filter(@dosages);
 
-	    print $STATS "$snp_id\t$score{scored_marker_fraction}\t$score{allele_freq}\t$score{chi}\n";
+	    printf($STATS "$snp_id\t%.3f\t%.4f\t%.1f", $score{scored_marker_fraction}, $score{allele_freq}, $score{chi});
 
-	    if ($score{scored_marker_fraction} < @dosages * 0.4) { 
+	    if ($score{scored_marker_fraction} < 0.4) { 
 		print STDERR "Skipping $snp_id because of low scored markers ($score{scored_marker_fraction})\n";
+		print $STATS "\tSKIPPED\n";
 		next();
 	    }
-	    if ($score{allele_freq} > (1-$MAF)) { 
+	    if (($score{allele_freq} > 1-$MAF) || ($score{allele_freq} < $MAF) ) { 
 		print STDERR "Skipping $snp_id because of high allele frequency ($score{allele_freq})\n";
+		print $STATS "\tSKIPPED\n";
 		next();
 	    }
 	    if ($score{chi} > 20) { 
 		print STDERR "Skipping $snp_id because of Hardy Weinberg distribution ($score{chi})\n";
+		print $STATS "\tSKIPPED\n";
 		next();
 	    }
-
+	    print $STATS "\tRETAINED\n";
 	    
 	    print $OUT $snp_id;
 	    for (my $n = 0; $n < @clone_names; $n++) { 
@@ -125,7 +129,9 @@ while (<$F>) {
 			print $OUT "\t";
 			printf $OUT "%.2f", $dosages[$n];
 		    }
+		    else { print $OUT "\tNA"; }
 		}
+		else { print $OUT "\tNA"; }
 	    }
 	    print $OUT "\n";
 
@@ -201,41 +207,23 @@ sub hardy_weinberg_filter {
 
     }
 
-    print STDERR "NA count: $classes{NA}\n";
+    #print STDERR "NA count: $classes{NA}\n";
  
     my $total = $classes{AA} + $classes{AB} + $classes{BB};
 
-    my %score;
+    my %score = ();
     
-    if ($total < @dosages * 0.4) { 
-	#print STDERR "$total too small, skipping\n";
-	$score{scored_marker_fraction} = $total / @dosages;
-    }
-    else { 
-	print STDERR "Total: $total, lines: ".scalar(@dosages)."\n";
-    }
-
-    print STDERR "AA  $classes{AA}, AB $classes{AB}, BB $classes{BB} Total: $total\n";
+    $score{scored_marker_fraction} = $total / @dosages;
+    
+    #print STDERR "AA  $classes{AA}, AB $classes{AB}, BB $classes{BB} Total: $total\n";
     my $allele_freq = (2 * $classes{AA} + $classes{AB}) / (2 * $total);
 
-    if ($allele_freq > (1-$MAF)) { 
-	#print STDERR "Skipping due to allele frequence too close to 1\n";
-	$score{allele_freq} = $allele_freq;
-    }
-
-    print STDERR "Allele freq = $allele_freq       \n";
-
+    $score{allele_freq} = $allele_freq;
+    
     my $expected = $allele_freq **2 * $total;
     my $x = ($classes{AA} - $expected)**2 / $expected;
 
     $score{chi} = $x;
-
-#    if ($x > 20) { 
-#	return 1;
-#    }
-#    else { 
-#	return 0;
-#    }
 
     return %score;
 }
