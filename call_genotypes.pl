@@ -220,7 +220,7 @@ sub hardy_weinberg_filter {
 
     $score{allele_freq} = $allele_freq;
     
-    my $expected = $allele_freq **2 * $total;
+    my $expected = $allele_freq  * $total;
     my $x = ($classes{AA} - $expected)**2 / $expected;
 
     $score{chi} = $x;
