@@ -33,9 +33,9 @@ sub get_genotype {
     
 #    print STDERR "NBnokc1: $Nbnokc1, NBnokc2 $Nbnokc2\n";
 
-    my $pDAA = $Nbnokc1 * (0.99 ** $c1) * (0.01 ** $c2);
+    my $pDAA = $Nbnokc1 * (0.9975 ** $c1) * (0.0025 ** $c2);
     my $pDAB = $Nbnokc1 * (0.5 ** $c1) * (0.5 ** $c2);
-    my $pDBB = $Nbnokc2 * (0.99 ** $c2) * (0.01 ** $c1);
+    my $pDBB = $Nbnokc2 * (0.9975 ** $c2) * (0.0025 ** $c1);
 
  #   print STDERR "pDAA: $pDAA pDAB $pDAB, pDBB $pDBB\n";
 
