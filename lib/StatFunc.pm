@@ -33,9 +33,9 @@ sub get_genotype {
     
 #    print STDERR "NBnokc1: $Nbnokc1, NBnokc2 $Nbnokc2\n";
 
-    my $pDAA = $Nbnokc1 * (0.9975 ** $c1) * (0.0025 ** $c2);
+    my $pDAA = $Nbnokc1 * (0.999 ** $c1) * (0.001 ** $c2);
     my $pDAB = $Nbnokc1 * (0.5 ** $c1) * (0.5 ** $c2);
-    my $pDBB = $Nbnokc2 * (0.9975 ** $c2) * (0.0025 ** $c1);
+    my $pDBB = $Nbnokc2 * (0.999 ** $c2) * (0.001 ** $c1);
 
  #   print STDERR "pDAA: $pDAA pDAB $pDAB, pDBB $pDBB\n";
 
@@ -43,7 +43,7 @@ sub get_genotype {
     my $pSAB = $pDAB * $pAB;
     my $pSBB = $pDBB * $pBB;
 
-    if ($pSAA + $pSAB + $pSBB == 0) { 
+    if ($pSAA + $pSAB + $pSBB < 0.05) { # should add up to something significant such as 5% 
 	return "NA";
     }
     
@@ -104,9 +104,17 @@ sub hardy_weinberg_filter {
     my $expected = $allele_freq * (1-$allele_freq) * 2 * $total;
 
     print STDERR "TOTAL: $total\n";
-    my $x = ($classes{AB} - $expected)**2 / $expected;
 
-    $score{chi} = $x;
+    # overrepresented heterzygocity is unlikely (underrep is not)
+    # do the hardy weinberg test only if heterozygocity is higher than expected.
+    #
+    if ($classes{AB} > $expected) { 
+	my $x = ($classes{AB} - $expected)**2 / $expected;
+	$score{chi} = $x;
+    }
+    else { 
+	$score{chi} = 1;  #essentially ignore this test.
+    }
 
     return %score;
 }
