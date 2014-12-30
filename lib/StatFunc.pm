@@ -43,7 +43,7 @@ sub get_genotype {
     my $pSAB = $pDAB * $pAB;
     my $pSBB = $pDBB * $pBB;
 
-    if ($pSAA + $pSAB + $pSBB < 0.05) { # should add up to something significant such as 5% 
+    if ($pSAA + $pSAB + $pSBB == 0) { #
 	return "NA";
     }
     

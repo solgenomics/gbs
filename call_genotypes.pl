@@ -79,15 +79,24 @@ while(<$F>) {
 }
 
 for( my $n = 0; $n< @bad_calls_per_clone; $n++) { 
-    if ($bad_calls_per_clone[$n] >  $snps_processed * 0.95) { 
+    
+   if ($bad_calls_per_clone[$n] >  $snps_processed * (1 - 0.2)) { 
 	$clone_info[$n] = 'F';
 	print STDERR "Throwing away clone $clone_names[$n] (bad calls per clone = $bad_calls_per_clone[$n]\n";
-    }
+   }
 }
 
 close($F);
 
-$MIN_DEPTH = (@clone_names - $ignore_clones_count) * 1.5; 
+my $good_clones = 0;
+for(my $i=0; $i<@clone_info; $i++) {
+    if (!$clone_info[$i]) {
+	$good_clones++;
+    }
+}
+
+
+$MIN_DEPTH =  $good_clones * 1.5; #(@clone_names - $ignore_clones_count) * 1.5; 
 print STDERR "Using a default of $MIN_DEPTH\n";
 
 $snps_processed = 0;
@@ -199,9 +208,9 @@ while (<$F>) {
 	    print STDERR "Skipping monomorphic marker $snp_id\n";
 	    next();
 	}
-	printf($STATS "$snp_id\t%.3f\t%.4f\t%.1f", $score{scored_marker_fraction}, $score{allele_freq}, $score{chi});
+	printf($STATS "$snp_id\t%.3f\t%.4f\t%.1f", $score{scored_marker_fraction}, $score{allele_freq}, $score{chi}, $score{scored_marker_fraction});
 	
-	if ($score{scored_marker_fraction} < 0.4) { 
+	if ($score{scored_marker_fraction} < 0.2) { 
 	    print STDERR "Skipping $snp_id because of low scored markers ($score{scored_marker_fraction})\n";
 	    print $STATS "\tSKIPPED\n";
 		next();
