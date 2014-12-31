@@ -39,43 +39,50 @@ print STDERR "min_maf: $min_maf\n\n";
 
 my $gtio = CXGN::GenotypeIO->new({ file => $file, format => 'vcf' });
 
-print STDERR $gtio->count();
-
+my $acc_count = $gtio->count();
+print STDERR "TOTAL ACC: $acc_count\n";
 my %genotype_info = ();
-
-while (my $gt = $gtio->next()) { 
-    my $name = $gt->name();
-    $genotype_info{$name} = {};
-    message("Processing genotype: $name\n");
-    my %scores = $gt -> markerscores();
-    my $percent_good_scores = $gt->percent_good_calls();
-    $genotype_info{$name}->{min_good_scores}=$percent_good_scores;
-    message("percent good scores: $percent_good_scores\n");
-}
-
-
-$gtio->close();
-
 my %genotype_problems = ();
 my @valid_accessions = ();
 
-foreach my $name (keys %genotype_info) { 
+my $stats = $gtio->summary_stats();
+
+print STDERR Dumper($stats);
+
+foreach my $acc (keys %$stats) { 
     my $valid =1;
-    if ($genotype_info{$name}->{min_good_scores} < 0.2) { 
-	push @{$genotype_problems{$name}}, "failed min_good_scores";
+
+    if ($acc =~ /failed|empty|blank|NA\:d+/) {
+	push @{$genotype_problems{$acc}}, "empty or blank";
 	$valid =0;
+	$acc_count--;
     }
-    if ($name =~ /failed|empty|blank|NA\:d+/) {
-	push @{$genotype_problems{$name}}, "empty or blank";
+    my $good_score_fraction = $stats->{$acc} / $acc_count;
+    if ( $good_score_fraction < $genotype_min_good_scores) { 
+    print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
+	push @{$genotype_problems{$acc}}, "failed min_good_scores";
 	$valid =0;
     }
     
-    if ($valid && $name) { 
-	push @valid_accessions, $name;
+    if ($valid && $acc) { 
+	push @valid_accessions, $acc;
     }
+
 }
 
+print STDERR "TOTAL ACCS NOW: $acc_count\n";
+# while (my $gt = $gtio->next()) { 
+#     my $name = $gt->name();
+#     $genotype_info{$name} = {};
+#     message("Processing genotype: $name\n");
+#     my %scores = $gt -> markerscores();
+#     my $percent_good_scores = $gt->percent_good_calls();
+#     $genotype_info{$name}->{min_good_scores}=$percent_good_scores;
+#     message("percent good scores: $percent_good_scores\n");
+# }
 
+
+$gtio->close();
 
 
 message("Parsing SNPS...\n");
@@ -84,10 +91,10 @@ my $snps_io = CXGN::SNPsIO->new( { file => $file });
 $snps_io->ignore_accessions(\%genotype_problems);	
 $snps_io->valid_accessions(\@valid_accessions);
 
-print STDERR Dumper(\@valid_accessions);
+print STDERR "VALID ACCESSIONS: ".Dumper(\@valid_accessions);
 
 my $total_clone_count = scalar(@{$snps_io->valid_accessions()});
-
+print STDERR "Total valid accessions: $total_clone_count\n";
 # print header
 #
 print $OUT "SNP\t";
@@ -114,15 +121,10 @@ while (my $snps = $snps_io->next()) {
     my @dosages;
     foreach my $k (@valid_accessions) { 
 	my $s = $snps->snps()->{$k};
-	print STDERR "ACCESSION: ".$s->accession()."\n";
-	#if (exists($snps_io->ignore_accessions()->{$s->accession()})) { 
-	#    my $message = join "; ", @{$snps_io->ignore_accessions()->{$s->accession()}};
-	#    print STDERR "Skipping snp call for accession ".$s->accession()." because it is on the ignore list [$message].\n";
-	#    next; 
-	#}
+	#print STDERR "ACCESSION: ".$s->accession()."\n";
 	
 	my $dosage = $snps->calculate_snp_dosage($s);
-	print STDERR "DOSAGE: $dosage\n";
+	#print STDERR "DOSAGE: $dosage\n";
 	push @dosages, $dosage;
     }
     
@@ -135,7 +137,7 @@ while (my $snps = $snps_io->next()) {
     elsif ( ( $allele_freq < 0.1) || ( $allele_freq > 0.9)) { 
 	$lowN = $total_clone_count * 0.3;
     }
-    elsif (($allele_freq > 0.1) || ($allele_freq < 0.9)) { 
+    else {    #if (($allele_freq > 0.1) || ($allele_freq < 0.9)) { 
 	$lowN = $total_clone_count * 0.2;
     }
     
