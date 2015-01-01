@@ -161,7 +161,7 @@ while (my $snps = $snps_io->next()) {
     }
     if (exists($score{scored_marker_fraction})){ 
 	if ($score{scored_marker_fraction} < $min_scored_marker_fraction) { 
-	    messag("Skipping $snp_id because it is scored marker fraction ($score{scored_marker_fraction}) is below the minimum of $min_scored_marker_fraction\n");
+	    message("Skipping $snp_id because it is scored marker fraction ($score{scored_marker_fraction}) is below the minimum of $min_scored_marker_fraction\n");
 	    $skip=1;
 	}
 	if ($score{heterozygote_count} < 3) { 
