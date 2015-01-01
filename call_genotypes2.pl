@@ -40,15 +40,18 @@ print STDERR "min_maf: $min_maf\n\n";
 my $gtio = CXGN::GenotypeIO->new({ file => $file, format => 'vcf' });
 
 my $acc_count = $gtio->count();
-print STDERR "TOTAL ACC: $acc_count\n";
+#print STDERR "TOTAL ACC: $acc_count\n";
 my %genotype_info = ();
 my %genotype_problems = ();
 my @valid_accessions = ();
 
+message("Gathering genotype stats...");
 my $stats = $gtio->summary_stats();
 
-print STDERR Dumper($stats);
+message(" Done.");
+#print STDERR Dumper($stats);
 
+message("Generating a list of valid accessions...");
 foreach my $acc (keys %$stats) { 
     my $valid =1;
 
@@ -59,7 +62,7 @@ foreach my $acc (keys %$stats) {
     }
     my $good_score_fraction = $stats->{$acc} / $acc_count;
     if ( $good_score_fraction < $genotype_min_good_scores) { 
-    print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
+	print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
 	push @{$genotype_problems{$acc}}, "failed min_good_scores";
 	$valid =0;
     }
@@ -69,8 +72,9 @@ foreach my $acc (keys %$stats) {
     }
 
 }
+message(" Done.");
 
-print STDERR "TOTAL ACCS NOW: $acc_count\n";
+#print STDERR "TOTAL ACCS NOW: $acc_count\n";
 # while (my $gt = $gtio->next()) { 
 #     my $name = $gt->name();
 #     $genotype_info{$name} = {};
