@@ -174,7 +174,7 @@ while (my $snps = $snps_io->next()) {
 	}
     }
     
-    print $STATS "$snp_id\t$score{monomorphic}\t$score{scored_marker_fraction}\t$score{heterozygote_count}\t$score{chi}\n";
+    printf($STATS "$snp_id\t%.3f\t%.4f\t%.1f\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}));
 
     if ($skip) { 
 	message("SKIPPING!\n");
@@ -183,7 +183,7 @@ while (my $snps = $snps_io->next()) {
     else { 
 	message("SNP $snp_id IS OK! OUTPUTTING...\n");
 	print $OUT $snp_id."\t";
-	print $OUT join "\t", @dosages;
+	foreach my $d (@dosages) { printf ($OUT "\t%.2f", $d); }
 	print $OUT "\n";
     }
 		
