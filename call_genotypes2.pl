@@ -34,7 +34,7 @@ If the SNP does not correspond a Hardy Weinberg distribution with a chi square v
 
 =item *
 
-If the SNP 
+If the SNP counts don't sum up to 2 or more, NA is emitted.
 
 =back
 
@@ -118,7 +118,10 @@ print STDERR "Processing file: $infile\n";
 print STDERR "Output in file: $outfile\n";
 print STDERR "Stats in file: $stats\n";
 print STDERR "genotype_min_good_scores: $genotype_min_good_scores\n";
-print STDERR "min_maf: $min_maf\n\n";
+print STDERR "min_maf: $min_maf\n";
+print STDERR "max_chi: $max_chi\n";
+print STDERR "min_heterozygote_count: $min_heterozygote_count\n";
+print STDERR "\n";
 
 my $gtio = CXGN::GenotypeIO->new({ file => $infile, format => 'vcf' });
 
@@ -203,6 +206,7 @@ while (my $snps = $snps_io->next()) {
 	
 	my $dosage = $snps->calculate_snp_dosage($s);
 	#print STDERR "DOSAGE: $dosage\n";
+	$s->dosage($dosage);
 	push @dosages, $dosage;
     }
     
@@ -256,9 +260,19 @@ while (my $snps = $snps_io->next()) {
     }
     else { 
 	message("SNP $snp_id IS OK! OUTPUTTING...\n");
-	print $OUT $snp_id."\t";
-	foreach my $d (@dosages) { printf ($OUT "\t%.2f", $d); }
+	print $OUT $snp_id;
+	foreach my $acc (@{$snps->valid_accessions()}) { 
+	    my $snp = $snps->snps()->{$acc};
+	    if ($snp->ref_count() + 
+		$snp->alt_count() > 1) { 
+		printf ($OUT "\t%.2f", $snp->dosage()); 
+	    }
+	    else { 
+		print $OUT "\tNA";
+	    }
+	}
 	print $OUT "\n";
+
     }
 		
 }
