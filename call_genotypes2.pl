@@ -127,8 +127,8 @@ print STDERR "\n";
 
 my $gtio = CXGN::GenotypeIO->new({ file => $infile, format => 'vcf' });
 
-my $acc_count = $gtio->count();
-#print STDERR "TOTAL ACC: $acc_count\n";
+my $acc_count = scalar($gtio->accessions());
+
 my %genotype_info = ();
 my %genotype_problems = ();
 my @valid_accessions = ();
