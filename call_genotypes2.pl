@@ -6,7 +6,7 @@ call_genotypes2.pl - a script to filter genotypes from GBS experiments
 
 =head1 SYNOPSYS
 
-perl call_genotypes2.pl --genotype_min_good_scores 0.2 --verbose --min_maf 0.001  min_scored_marker_fraction 0.2 --max_chi 30 --min_heterozygote_count 3  --infile snp_file.vcf --outfile output.dosage
+perl call_genotypes2.pl --genotype_min_good_scores 0.2 --verbose --strict_dosage_filter --min_maf 0.001  min_scored_marker_fraction 0.2 --max_chi 30 --min_heterozygote_count 3  --infile snp_file.vcf --outfile output.dosage
 
 All parameters are optional, except the infile and the outfile parameters.
 
@@ -22,7 +22,7 @@ Then the vcf file is parsed on a 'per line' basis and checks on a snp population
 
 =item * 
 
-If the minor allele frequency is below min_maf (default 0.001), the SNP is excluded
+If the minor allele frequency is below min_maf (default is 0, meaning no filtering based on allele frequency), the SNP is excluded
 
 =item *
 
@@ -30,7 +30,7 @@ If the SNP is monomorphic, it is excluded
 
 =item * 
 
-If the SNP does not correspond a Hardy Weinberg distribution with a chi square value of more than max_chi (default 30), it is excluded.
+If the SNP does not correspond a Hardy Weinberg distribution with a chi square value of more than max_chi (default 20), it is excluded.
 
 =item *
 
@@ -82,15 +82,17 @@ use CXGN::SNPsIO;
 #
 my $genotype_min_good_scores = 0.2;
 my $verbose = 0;
-my $min_maf = 0.001;
+my $min_maf = 0;
 my $min_scored_marker_fraction = 0.2;
-my $max_chi = 30;
+my $max_chi = 20;
 my $min_heterozygote_count = 3;
+my $strict_dosage_filter = 0;
 my $infile;
 my $outfile;
 
 GetOptions("genotype_min_good_scores=f"=> \$genotype_min_good_scores,
 	   "verbose" => \$verbose,
+	   "strict_dosage_filter" => \$strict_dosage_filter,
 	   "min_maf=f" => \$min_maf,
 	   "min_scored_marker_fraction=f"=> \$min_scored_marker_fraction,
 	   "max_chi=f" => \$max_chi,
@@ -191,9 +193,11 @@ while (my $snps = $snps_io->next()) {
     
     my $allele_freq = $snps->calculate_allele_frequency_using_counts();
     message("ALLELE FREQ: $allele_freq\n");
-    if ($allele_freq < $min_maf || $allele_freq > (1-$min_maf)) { 
-	print STDERR "Ignoring snp ".$snps->id()."\n";
-	$skip = 1;
+    if ($min_maf) { 
+	if ($allele_freq < $min_maf || $allele_freq > (1-$min_maf)) { 
+	    print STDERR "Ignoring snp ".$snps->id()."\n";
+	    $skip = 1;
+	}
     }
     
     my $valid_clone_count = scalar(@{$snps->accessions}) - scalar(keys(%{$snps_io->ignore_accessions}));
@@ -204,34 +208,37 @@ while (my $snps = $snps_io->next()) {
 	my $s = $snps->snps()->{$k};
 	#print STDERR "ACCESSION: ".$s->accession()."\n";
 	
-	my $dosage = $snps->calculate_snp_dosage($s);
+	my $dosage = $snps->calculate_snp_dosage($s, $strict_dosage_filter);
 	#print STDERR "DOSAGE: $dosage\n";
 	$s->dosage($dosage);
 	push @dosages, $dosage;
     }
     
-
-
-    my $lowN;
-    if (( $allele_freq < 0.01) || ($allele_freq > 0.99)) { 
-	$lowN = $total_clone_count * 0.4;
-    }
-    elsif ( ( $allele_freq < 0.1) || ( $allele_freq > 0.9)) { 
-	$lowN = $total_clone_count * 0.3;
-    }
-    else {    #if (($allele_freq > 0.1) || ($allele_freq < 0.9)) { 
-	$lowN = $total_clone_count * 0.2;
-    }
-    
-    if ($snps->depth() < $lowN) { 
-	print STDERR "Skipping $snp_id because of low depth (".$snps->depth()." vs. minimum of $lowN).\n";
+    if ($snps->depth() < 1.5 * scalar(@valid_accessions)) { 
+	print STDERR "Skipping $snp_id because of low depth (".$snps->depth()." of 1.5 * valid acc count).\n";
 	$skip = 1;
     }
     else { 
-	message("Keeping $snp_id becasue depth is ok (".$snps->depth()." vs. minimum of $lowN).\n");
+	message("Keeping $snp_id because depth is ok (".$snps->depth().").\n");
     }
 
     my %score = $snps->hardy_weinberg_filter(\@dosages);
+
+    my $minN;
+    if (( $score{allele_freq} < 0.01) || ($score{allele_freq} > 0.99)) { 
+	$minN = $valid_clone_count * 0.4;
+    }
+    elsif ( ( $allele_freq < 0.1) || ( $allele_freq > 0.9)) { 
+	$minN = $valid_clone_count * 0.3;
+    }
+    else {    #if (($allele_freq > 0.1) || ($allele_freq < 0.9)) { 
+	$minN = $valid_clone_count * 0.2;
+    }
+    
+    if ($score{total} < $minN) { 
+	$skip = 1;
+    }
+   
     print STDERR Dumper(\%score);
     if (exists($score{monomorphic})) { 
 	message("Skipping $snp_id because it is monomorphic\n");
@@ -252,7 +259,7 @@ while (my $snps = $snps_io->next()) {
 	}
     }
     
-    printf($STATS "$snp_id\t%.3f\t%.4f\t%.1f\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}));
+    printf($STATS "%s\t%sf\t%.4f\t%.1f\t%2.1f\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}));
 
     if ($skip) { 
 	message("SKIPPING!\n");
