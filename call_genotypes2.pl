@@ -127,13 +127,13 @@ print STDERR "\n";
 
 my $gtio = CXGN::GenotypeIO->new({ file => $infile, format => 'vcf' });
 
-my $acc_count = scalar($gtio->accessions());
+my $acc_count = scalar(@{$gtio->accessions()});
 
 my %genotype_info = ();
 my %genotype_problems = ();
 my @valid_accessions = ();
 
-message("Gathering genotype stats...");
+message("Gathering genotype stats ($acc_count accessions)... ");
 my $stats = $gtio->summary_stats();
 
 message(" Done.");
@@ -148,6 +148,7 @@ foreach my $acc (keys %$stats) {
 	$valid =0;
 	$acc_count--;
     }
+    print STDERR "Good count: $stats->{$acc}\n";
     my $good_score_fraction = $stats->{$acc} / $acc_count;
     if ( $good_score_fraction < $genotype_min_good_scores) { 
 	print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
@@ -160,7 +161,9 @@ foreach my $acc (keys %$stats) {
     }
 
 }
+
 message(" Done.");
+message("Parsed".scalar(@valid_accessions)." valid accessions\n");
 
 $gtio->close();
 
