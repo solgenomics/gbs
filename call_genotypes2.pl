@@ -89,6 +89,7 @@ my $min_heterozygote_count = 3;
 my $strict_dosage_filter = 0;
 my $infile;
 my $outfile;
+my $valid_accession_file="";
 
 GetOptions("genotype_min_good_scores=f"=> \$genotype_min_good_scores,
 	   "verbose" => \$verbose,
@@ -99,6 +100,7 @@ GetOptions("genotype_min_good_scores=f"=> \$genotype_min_good_scores,
 	   "min_heterozygote_count=i" => \$min_heterozygote_count,
 	   "infile=s" => \$infile,
 	   "outfile=s" => \$outfile,
+	   "valid_accession_file" => \$valid_accession_file,
     );
 
 if (!$outfile) { 
@@ -139,27 +141,39 @@ my $stats = $gtio->summary_stats();
 message(" Done.");
 #print STDERR Dumper($stats);
 
-message("Generating a list of valid accessions...");
-foreach my $acc (keys %$stats) { 
-    my $valid =1;
-
-    if ($acc =~ /failed|empty|blank|NA\:d+/) {
-	push @{$genotype_problems{$acc}}, "empty or blank";
-	$valid =0;
-	$acc_count--;
+if ($valid_accession_file) { 
+    message("Reading valid accessions from file $valid_accession_file\n");    
+    open(my $F, "<", $valid_accession_file) || die "Can't open accession file $valid_accession_file.\n";
+    while (<F>) { 
+	chomp;
+	my @accessions = split /\s+/;
+	foreach my $a (@accession) { 
+	    push @valid_accessions, $a;
+	}
     }
-    print STDERR "Good count: $stats->{$acc}\n";
-    my $good_score_fraction = $stats->{$acc} / $acc_count;
-    if ( $good_score_fraction < $genotype_min_good_scores) { 
-	print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
-	push @{$genotype_problems{$acc}}, "failed min_good_scores";
-	$valid =0;
+}
+else { 
+    message("Generating a list of valid accessions...");
+    foreach my $acc (keys %$stats) { 
+	my $valid =1;
+	
+	if ($acc =~ /failed|empty|blank|NA\:d+/) {
+	    push @{$genotype_problems{$acc}}, "empty or blank";
+	    $valid =0;
+	    $acc_count--;
+	}
+	print STDERR "Good count: $stats->{$acc}\n";
+	my $good_score_fraction = $stats->{$acc} / $acc_count;
+	if ( $good_score_fraction < $genotype_min_good_scores) { 
+	    print STDERR "$good_score_fraction is too low ($genotype_min_good_scores)\n";
+	    push @{$genotype_problems{$acc}}, "failed min_good_scores";
+	    $valid =0;
+	}
+	
+	if ($valid && $acc) { 
+	    push @valid_accessions, $acc;
+	}
     }
-    
-    if ($valid && $acc) { 
-	push @valid_accessions, $acc;
-    }
-
 }
 
 message(" Done.");
@@ -203,8 +217,8 @@ while (my $snps = $snps_io->next()) {
 	}
     }
     
-    my $valid_clone_count = scalar(@{$snps->accessions}) - scalar(keys(%{$snps_io->ignore_accessions}));
-    #print STDERR "CLONE COUNT: $valid_clone_count\n";
+    my $valid_clone_count = scalar(@{$snps->valid_accessions()});
+    print STDERR "CLONE COUNT: $valid_clone_count\n";
 
     my @dosages;
     foreach my $k (@valid_accessions) { 
@@ -262,7 +276,7 @@ while (my $snps = $snps_io->next()) {
 	}
     }
     
-    printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%3.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "SKIPPED" : "RETAINED" ));
+    printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%3.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "REJECT" : "ACCEPT" ));
 
     if ($skip) { 
 	message("SKIPPING!\n");
