@@ -262,7 +262,7 @@ while (my $snps = $snps_io->next()) {
 	}
     }
     
-    printf($STATS "%s\t%sf\t%.4f\t%.1f\t%2.1f\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}));
+    printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%3.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "SKIPPED" : "RETAINED" ));
 
     if ($skip) { 
 	message("SKIPPING!\n");
