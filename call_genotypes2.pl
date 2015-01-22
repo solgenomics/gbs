@@ -1,5 +1,4 @@
 
-
 =head1 NAME
 
 call_genotypes2.pl - a script to filter genotypes from GBS experiments
@@ -147,7 +146,7 @@ if ($valid_accession_file) {
     while (<F>) { 
 	chomp;
 	my @accessions = split /\s+/;
-	foreach my $a (@accession) { 
+	foreach my $a (@accessions) { 
 	    push @valid_accessions, $a;
 	}
     }
