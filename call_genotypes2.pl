@@ -143,7 +143,7 @@ message(" Done.");
 if ($valid_accession_file) { 
     message("Reading valid accessions from file $valid_accession_file\n");    
     open(my $F, "<", $valid_accession_file) || die "Can't open accession file $valid_accession_file.\n";
-    while (<F>) { 
+    while (<$F>) { 
 	chomp;
 	my @accessions = split /\s+/;
 	foreach my $a (@accessions) { 
@@ -176,7 +176,7 @@ else {
 }
 
 message(" Done.");
-message("Parsed".scalar(@valid_accessions)." valid accessions\n");
+message("Parsed ".scalar(@valid_accessions)." valid accessions\n");
 
 $gtio->close();
 
@@ -260,19 +260,18 @@ while (my $snps = $snps_io->next()) {
 	message("Skipping $snp_id because it is monomorphic\n");
 	$skip = 1;
     }
-    if (exists($score{scored_marker_fraction})){ 
-	if ($score{scored_marker_fraction} < $min_scored_marker_fraction) { 
-	    message("Skipping $snp_id because it is scored marker fraction ($score{scored_marker_fraction}) is below the minimum of $min_scored_marker_fraction\n");
-	    $skip=1;
-	}
-	if ($score{heterozygote_count} < $min_heterozygote_count) { 
-	    message("Skipping $snp_id because of low heterozygote count ($score{heterozygote_count})\n");
-	    $skip=1;
-	}
-	if ($score{chi} > $max_chi) { 
-	    message("Skipping $snp_id because of chi value ($score{chi})\n");
-	    $skip=1;
-	}
+
+    if ($score{scored_marker_fraction} < $min_scored_marker_fraction) { 
+	message("Skipping $snp_id because it is scored marker fraction ($score{scored_marker_fraction}) is below the minimum of $min_scored_marker_fraction\n");
+	$skip=1;
+    }
+    if ($score{heterozygote_count} < $min_heterozygote_count) { 
+	message("Skipping $snp_id because of low heterozygote count ($score{heterozygote_count})\n");
+	$skip=1;
+    }
+    if ($score{chi} > $max_chi) { 
+	message("Skipping $snp_id because of chi value ($score{chi})\n");
+	$skip=1;
     }
     
     printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%3.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "REJECT" : "ACCEPT" ));
