@@ -99,7 +99,7 @@ GetOptions("genotype_min_good_scores=f"=> \$genotype_min_good_scores,
 	   "min_heterozygote_count=i" => \$min_heterozygote_count,
 	   "infile=s" => \$infile,
 	   "outfile=s" => \$outfile,
-	   "valid_accession_file" => \$valid_accession_file,
+	   "valid_accession_file=s" => \$valid_accession_file,
     );
 
 if (!$outfile) { 
