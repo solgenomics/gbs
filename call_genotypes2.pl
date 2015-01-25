@@ -274,7 +274,7 @@ while (my $snps = $snps_io->next()) {
 	$skip=1;
     }
     
-    printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%3.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "REJECT" : "ACCEPT" ));
+    printf($STATS "%s\t%s\t%.4f\t%.1f\t%2.1f\t%s\n", ($snp_id, $score{monomorphic} ? 'monomorphic' : 'polymorphic',$score{scored_marker_fraction}, $score{heterozygote_count}, $score{chi}, $skip ? "REJECT" : "ACCEPT" ));
 
     if ($skip) { 
 	message("SKIPPING!\n");
