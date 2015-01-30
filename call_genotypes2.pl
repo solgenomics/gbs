@@ -37,7 +37,7 @@ If the SNP counts don't sum up to 2 or more, NA is emitted.
 
 =back
 
-The SNP dosage is calculated based on the specific SNP counts and an assumed error rate.
+The SNP dosage is calculated based on the specific SNP counts and an assumed error rate. The option --good_range gives the range that the calculated dosage will be retained, otherwise NA will be emitted. if --good_range is 0.2, NA will be emitted for values larger than 0.2 and smaller than 0.8, or larger than 1.2 and 1.8.
 
 =head2 OUTPUT FILE
 
@@ -86,6 +86,7 @@ my $min_scored_marker_fraction = 0.2;
 my $max_chi = 20;
 my $min_heterozygote_count = 3;
 my $strict_dosage_filter = 0;
+my $good_range = 0.1;
 my $infile;
 my $outfile;
 my $valid_accession_file="";
@@ -100,6 +101,7 @@ GetOptions("genotype_min_good_scores=f"=> \$genotype_min_good_scores,
 	   "infile=s" => \$infile,
 	   "outfile=s" => \$outfile,
 	   "valid_accession_file=s" => \$valid_accession_file,
+	   "good_range=f" => \$good_range,
     );
 
 if (!$outfile) { 
