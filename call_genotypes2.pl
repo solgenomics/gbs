@@ -255,6 +255,8 @@ while (my $snps = $snps_io->next()) {
 	$skip = 1;
     }
    
+    
+
     print STDERR Dumper(\%score);
     if (exists($score{monomorphic})) { 
 	message("Skipping $snp_id because it is monomorphic\n");
@@ -285,6 +287,7 @@ while (my $snps = $snps_io->next()) {
 	print $OUT $snp_id;
 	foreach my $acc (@{$snps->valid_accessions()}) { 
 	    my $snp = $snps->snps()->{$acc};
+	    if ( (($snp->dosage() > 0.1) && ($snp->dosage() < 0.9))  || (($snp->dosage() > 1.1)  &&  ($snp->dosage() < 1.9)) ) { $snp->dosage("NA"); }
 	    if ($snp->ref_count() + 
 		$snp->alt_count() > 1) { 
 		printf ($OUT "\t%.2f", $snp->dosage()); 
