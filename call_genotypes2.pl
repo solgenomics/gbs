@@ -289,9 +289,12 @@ while (my $snps = $snps_io->next()) {
 	print $OUT $snp_id;
 	foreach my $acc (@{$snps->valid_accessions()}) { 
 	    my $snp = $snps->snps()->{$acc};
-	    if ( (($snp->dosage() > 0.1) && ($snp->dosage() < 0.9))  || (($snp->dosage() > 1.1)  &&  ($snp->dosage() < 1.9)) ) { $snp->dosage("NA"); }
-	    if ($snp->ref_count() + 
-		$snp->alt_count() > 1) { 
+	    
+	    my $out_of_bounds = (($snp->dosage() > $good_range) && ($snp->dosage() < (1-$good_range))  || (($snp->dosage() > (1+$good_range))  &&  ($snp->dosage() < (2-$good_range))));
+
+	    my $enough_counts = ($snp->ref_count() + $snp->alt_count()) > 1;
+
+	    if ($enough_counts && !$out_of_bounds) { 
 		printf ($OUT "\t%.2f", $snp->dosage()); 
 	    }
 	    else { 
