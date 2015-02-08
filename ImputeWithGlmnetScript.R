@@ -1,7 +1,8 @@
 
 ##
 ## Imputation script by Martha Hamblin
-## Takes an argumgnet a tab delimited file with col headers = accessions, row headers = markers
+## Takes a tab delimited file as an argument
+## file: col headers = accessions, row headers = markers
 ## Script transposes the table, ensures numericness and runs the imputation function.
 ## Feb 2015
 ## 
