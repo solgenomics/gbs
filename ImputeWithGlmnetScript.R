@@ -14,6 +14,7 @@ library("glmnet");
 
 chr_file = args[1]
 
+
 ## This is the basic imputation function. Depending on how thw dosage files were made, you may want to add some filters, which are available as ## functions. Make sure you know whether the snps should be by row or by column.
 
 ## SNPs are in columns. They come out of perl script in rows.
@@ -176,22 +177,40 @@ for(j in 1:ncol(snps)){
  }
  return(temp)
  }
+
+# returns string w/o leading or trailing whitespace
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
+trim(chr_file)
  
-print(paste("Reading file ", chr_file, "..."));
+print(paste("Reading file ",chr_file,"..."));
 
-chr <- read.table(chr_file, header=TRUE, sep="\t")
+chr <- read.table(chr_file, sep="\t", header=TRUE)
 
-print("Transposing...");
-chrt = t(chr)
+snp_names <- chr[,1]
+acc_names <- chr[0,]
 
-print("Making numeric...");
-chrtm = as.matrix(chrt)
-mode(chrtm) <- "numeric"
+acc_names <- acc_names[2:length(acc_names)]
+#snp_names <- c("", snp_names)
+print(snp_names)
+#print(acc_names)
+
+print("Transposing...")
+
+chrtm <- t(chr)
+
+#remove first line - snp_names
+chrtm_wo <- chrtm[2:nrow(chrtm),]
+
+#print(chrtm)
+print("Making numeric...")
+
+mode(chrtm_wo) <- "numeric"
  
 print("Imputing...");
-chrtmi = impute.glmnet(chrtm)
+chrtmi = impute.glmnet(chrtm_wo)
 
 print("Writing output...");
-write.table(chrtmi, file = paste(chr_file, ".imputed.txt", sep="\t"));
+write.table(chrtmi, file = paste(chr_file,".imputed.txt"), sep="\t", quote=FALSE, col.names=snp_names);
 
 print("Done.");
