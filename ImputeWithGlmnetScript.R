@@ -9,7 +9,7 @@
 
 args <- commandArgs(trailingOnly = TRUE);
 
-print("Loading glmnet library...");
+writeLines("Loading glmnet library...");
 library("glmnet");
 
 chr_file = args[1]
@@ -161,56 +161,48 @@ for(j in 1:ncol(snps)){
  	}
   }
   return(snps)
-  }
+ }
  
  
  
  compareImputatedToPoorDosage <- function(snps,snpsImp){
- temp <- array(dim=ncol(snpsImp))
- for(j in 1:ncol(snps)){
+   temp <- array(dim=ncol(snpsImp))
+   for(j in 1:ncol(snps)){
 	a <- which(snps[,j] > 0.1 & snps[,j] < 0.9)
 	b <- which(snps[,j] > 1.1 & snps[,j] < 1.9)
 	c <- c(a,b)
 	a <- which(snpsImp[c,j] > 0.1 & snpsImp[c,j] < 0.9)
 	b <- which(snpsImp[c,j] > 1.1 & snpsImp[c,j] < 1.9)
 	temp[j] <- length(c) - (length(a) + length(b))
- }
- return(temp)
+   }
+   return(temp)
  }
 
 # returns string w/o leading or trailing whitespace
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
-trim(chr_file)
+chr_file = trim(chr_file)
  
-print(paste("Reading file ",chr_file,"..."));
+writeLines(paste("Reading file ",chr_file,"..."));
 
-chr <- read.table(chr_file, sep="\t", header=TRUE)
+chr <- read.table(chr_file, sep="\t", row.names=1, header=TRUE)
 
-snp_names <- chr[,1]
-acc_names <- chr[0,]
-
-acc_names <- acc_names[2:length(acc_names)]
-#snp_names <- c("", snp_names)
-print(snp_names)
-#print(acc_names)
-
-print("Transposing...")
+writeLines("Transposing...")
 
 chrtm <- t(chr)
 
 #remove first line - snp_names
-chrtm_wo <- chrtm[2:nrow(chrtm),]
+#chrtm_wo <- chrtm[2:nrow(chrtm),]
 
-#print(chrtm)
-print("Making numeric...")
+#writeLines(chrtm)
+writeLines("Making numeric...")
 
-mode(chrtm_wo) <- "numeric"
+mode(chrtm) <- "numeric"
  
-print("Imputing...");
-chrtmi = impute.glmnet(chrtm_wo)
+writeLines("Imputing...");
+chrtmi = impute.glmnet(chrtm)
 
-print("Writing output...");
-write.table(chrtmi, file = paste(chr_file,".imputed.txt"), sep="\t", quote=FALSE, col.names=snp_names);
+writeLines("Writing output...");
+write.table(chrtmi, file = paste(chr_file,".imputed.txt"), sep="\t", quote=FALSE);# col.names=snp_names);
 
-print("Done.");
+writeLines("Done.");
