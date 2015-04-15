@@ -116,6 +116,7 @@ my $stats = $outfile.".stats";
 
 open(my $OUT, ">", $outfile) || die "Can't open file for writing $outfile\n";
 open(my $STATS, ">", $stats) || die "Can't open file for writing stats $stats\n";
+open(my $FVCF, ">", $outfile.".filtered.vcf") || die "Can't open filtered vcf file for writing\n";
 
 print STDERR "\nRUN SUMMARY\n";
 print STDERR "***********\n";
@@ -285,6 +286,7 @@ while (my $snps = $snps_io->next()) {
 	next();
     }
     else { 
+	print $FVCF $snps->raw()."\n";
 	message("SNP $snp_id IS OK! OUTPUTTING...\n");
 	print $OUT $snp_id;
 	foreach my $acc (@{$snps->valid_accessions()}) { 
@@ -309,6 +311,7 @@ while (my $snps = $snps_io->next()) {
 
 close($OUT);
 close($STATS);
+close($FVCF);
 
 sub message { 
     my $message = shift;
