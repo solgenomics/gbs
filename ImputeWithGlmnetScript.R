@@ -5,7 +5,9 @@
 ## file: col headers = accessions, row headers = markers
 ## Script transposes the table, ensures numericness and runs the imputation function.
 ## Feb 2015
-## 
+##
+## Modified 20150320 to remove space from .imputed.txt filename, tranpose after imputation to restore input format
+## and skip check.names function while reading input file to avoid changes to variable names.
 
 args <- commandArgs(trailingOnly = TRUE);
 
@@ -185,7 +187,7 @@ chr_file = trim(chr_file)
  
 writeLines(paste("Reading file ",chr_file,"..."));
 
-chr <- read.table(chr_file, sep="\t", row.names=1, header=TRUE)
+chr <- read.table(chr_file, sep="\t", row.names=1, header=TRUE, check.names=FALSE)
 
 writeLines("Transposing...")
 
@@ -202,7 +204,11 @@ mode(chrtm) <- "numeric"
 writeLines("Imputing...");
 chrtmi = impute.glmnet(chrtm)
 
+writeLines("Transposing back to original format...")
+
+chri <- t(chrtmi)
+
 writeLines("Writing output...");
-write.table(chrtmi, file = paste(chr_file,".imputed.txt"), sep="\t", quote=FALSE);# col.names=snp_names);
+write.table(chri, file = paste(chr_file, ".imputed.txt", sep=""), sep="\t", quote=FALSE);# col.names=snp_names);
 
 writeLines("Done.");

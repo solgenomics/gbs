@@ -1,4 +1,4 @@
-
+#!/usr/bin/perl -w
 use strict;
 
 my $file  = shift;
@@ -9,6 +9,7 @@ my $header = <$F>;
 chomp($header);
 
 my $test_file = $file .".test";
+my $mod_markers_count;
 
 open(my $T, ">", $test_file) || die "Can't open test file $test_file";
 print $T "$header\n";
@@ -20,21 +21,27 @@ while (<$F>) {
     # count NAs in scores...
     #
     my $na_count = 0;
-    foreach my $s (@scores) { 
+    my $s;
+    foreach $s (@scores) { 
 	if ($s eq "NA") { 
 	    $na_count++;
 	}
     }
+    if (($na_count < @scores * 0.10) and (rand() <0.50)) { 
 
-    if ($na_count > @scores * 0.70) { 
-	# do not eliminate this line
+	# randomly mask about half of known markers in some of the best accessions
 	#
-	print STDERR "Ignoring line for marker $marker (NA count: $na_count)...\n";
-    }
-    else { 
-	if (rand() > 0.20) { 
-	    print $T join "\t", ($marker, @scores);
-	    print $T "\n";
+	$mod_markers_count++;
+	print STDERR "Randomly masking half of known SNP values for well characterized marker $marker (Real NA count: $na_count)...\n";
+	foreach $s (@scores) {
+	    if ($s eq "NA") {
+	    } elsif (rand() >0.50) {
+		$s = "NA";
+	    } else {
+	    }
 	}
     }
+    print $T join "\t", ($marker, @scores);
+    print $T "\n";
 }
+print "$mod_markers_count markers modified./"; 
