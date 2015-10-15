@@ -181,6 +181,9 @@ else {
 message(" Done.");
 message("Parsed ".scalar(@valid_accessions)." valid accessions\n");
 
+foreach (0..8) { print $FVCF "\t"; }
+print $FVCF join "\t", @valid_accessions;
+
 $gtio->close();
 
 message("Parsing SNPS...\n");
