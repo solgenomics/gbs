@@ -13,6 +13,7 @@ args <- commandArgs(trailingOnly = TRUE);
 
 writeLines("Loading glmnet library...");
 library("glmnet");
+library("methods");
 
 chr_file = args[1]
 
