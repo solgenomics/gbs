@@ -60,15 +60,15 @@ for ($b=0; $b<=$#imputedArray; $b++) {
     for ($c=0; $c<=7; $c++) {
         print RES "$imputedArray[$b][$c]\t";
     }
-    print RES "GT:AD:DP:GQ:DS:PH:PL\t";
+    print RES "GT:AD:DP:GQ:DS:OG:PL\t";
     
     for ($c=9; $c<=$#samples; $c++) {
         my @tmp1 = split(/:/, $imputedArray[$b][$c]);
-        my $phase = $tmp1[0];
 	my $dosage = $tmp1[1];
 	
         my @tmp2 = split(/:/, $nonImpArray[$b][$c]);
-        print RES "$tmp2[0]", ":", "$tmp2[1]", ":", "$tmp2[2]", ":", "$tmp2[3]", ":", "$dosage",":","phase",":", "$tmp2[4]\t";
+	my $original_genotype = $tmp2[0];
+        print RES "$tmp1[0]", ":", "$tmp2[1]", ":", "$tmp2[2]", ":", "$tmp2[3]", ":", "$dosage",":","$original_genotype",":", "$tmp2[4]\t";
     }
     print RES "\n";
 }
